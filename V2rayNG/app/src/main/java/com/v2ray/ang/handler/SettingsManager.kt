@@ -55,7 +55,9 @@ object SettingsManager {
     private fun initRoutingRulesets(context: Context) {
         val exist = MmkvManager.decodeRoutingRulesets()
         if (exist.isNullOrEmpty()) {
-            val rulesetList = getPresetRoutingRulesets(context)
+            // Forced global mode: always seed the GLOBAL preset (index 2 -> proxy
+            // everything) instead of the default WHITE (bypass China) preset.
+            val rulesetList = getPresetRoutingRulesets(context, RoutingType.GLOBAL.ordinal)
             MmkvManager.encodeRoutingRulesets(rulesetList)
         }
     }
@@ -180,29 +182,10 @@ object SettingsManager {
      * @return True if bypassing LAN, false otherwise.
      */
     fun routingRulesetsBypassLan(): Boolean {
-        val vpnBypassLan = MmkvManager.decodeSettingsString(AppConfig.PREF_VPN_BYPASS_LAN) ?: "1"
-        if (vpnBypassLan == "1") {
-            return true
-        } else if (vpnBypassLan == "2") {
-            return false
-        }
-
-        val guid = MmkvManager.getSelectServer() ?: return false
-        val config = decodeServerConfig(guid) ?: return false
-        if (config.configType == EConfigType.CUSTOM) {
-            val raw = MmkvManager.decodeServerRaw(guid) ?: return false
-            val v2rayConfig = JsonUtil.fromJsonSafe(raw, V2rayConfig::class.java)
-            val exist = v2rayConfig?.routing?.rules?.filter { it.outboundTag == TAG_DIRECT }?.any {
-                it.domain?.contains(GEOSITE_PRIVATE) == true || it.ip?.contains(GEOIP_PRIVATE) == true
-            }
-            return exist == true
-        }
-
-        val rulesetItems = MmkvManager.decodeRoutingRulesets()
-        val exist = rulesetItems?.filter { it.enabled && it.outboundTag == TAG_DIRECT }?.any {
-            it.domain?.contains(GEOSITE_PRIVATE) == true || it.ip?.contains(GEOIP_PRIVATE) == true
-        }
-        return exist == true
+        // Forced global mode: never bypass LAN. The VPN tun must take over the
+        // full 0.0.0.0/0 (and ::/0) range so no traffic — including LAN — can
+        // leak around the tunnel. This is the foundation of the kill switch.
+        return false
     }
 
     /**

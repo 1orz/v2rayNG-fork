@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CellHelper adaptive-icon foreground: ascending signal bars (108x108, content in safe zone). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,56 H42 V72 H34 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M47,46 H55 V72 H47 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,36 H68 V72 H60 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M73,26 H81 V72 H73 Z" />
+</vector>

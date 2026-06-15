@@ -1,14 +1,18 @@
 package com.v2ray.ang.ui
 
+import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import androidx.preference.CheckBoxPreference
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
+import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.VPN
 import com.v2ray.ang.R
+import com.v2ray.ang.extension.toastError
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.helper.MmkvPreferenceDataStore
 import com.v2ray.ang.util.Utils
@@ -30,6 +34,7 @@ class SettingsActivity : BaseActivity() {
         private val vpnBypassLan by lazy { findPreference<ListPreference>(AppConfig.PREF_VPN_BYPASS_LAN) }
         private val vpnInterfaceAddress by lazy { findPreference<ListPreference>(AppConfig.PREF_VPN_INTERFACE_ADDRESS_CONFIG_INDEX) }
         private val vpnMtu by lazy { findPreference<EditTextPreference>(AppConfig.PREF_VPN_MTU) }
+        private val alwaysOnVpn by lazy { findPreference<Preference>("pref_always_on_vpn") }
 
         private val mux by lazy { findPreference<CheckBoxPreference>(AppConfig.PREF_MUX_ENABLED) }
         private val muxConcurrency by lazy { findPreference<EditTextPreference>(AppConfig.PREF_MUX_CONCURRENCY) }
@@ -69,6 +74,22 @@ class SettingsActivity : BaseActivity() {
                 true
             }
 
+            // Anti-leak: jump to the system VPN settings so the user can enable
+            // "Always-on VPN" + "Block connections without VPN" (lockdown), the
+            // only true OS-level kill switch when the app is force-stopped.
+            alwaysOnVpn?.setOnPreferenceClickListener {
+                try {
+                    startActivity(Intent("android.settings.VPN_SETTINGS"))
+                } catch (e: Exception) {
+                    try {
+                        startActivity(Intent(Settings.ACTION_SETTINGS))
+                    } catch (e2: Exception) {
+                        activity?.toastError(R.string.toast_could_not_open_settings)
+                    }
+                }
+                true
+            }
+
             mux?.setOnPreferenceChangeListener { _, newValue ->
                 updateMux(newValue as Boolean)
                 true
@@ -96,7 +117,6 @@ class SettingsActivity : BaseActivity() {
                 updateMode(valueStr)
                 true
             }
-            mode?.dialogLayoutResource = R.layout.preference_with_help_link
 
             useHevTun?.setOnPreferenceChangeListener { _, newValue ->
                 updateHevTunSettings(newValue as Boolean)
@@ -285,9 +305,5 @@ class SettingsActivity : BaseActivity() {
             }
             updateEnableLocalProxy(enableLocalProxy?.isChecked == true)
         }
-    }
-
-    fun onModeHelpClicked(view: View) {
-        Utils.openUri(this, AppConfig.APP_WIKI_MODE)
     }
 }

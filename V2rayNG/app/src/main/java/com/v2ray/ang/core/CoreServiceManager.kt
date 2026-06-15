@@ -48,6 +48,19 @@ object CoreServiceManager {
     private var processFinder: XrayProcessFinder? = null
     private var browserDialer: IDialerService? = null
 
+    /**
+     * Keep-alive / anti-leak flag.
+     *
+     * True only when the user (or an intentional teardown such as a revoked VPN
+     * permission) asked the service to stop. While it is false, an unexpected
+     * core shutdown is treated as a crash: the VPN tun is kept up (traffic is
+     * black-holed, never leaked) and the watchdog restarts the core.
+     *
+     * Set by [CoreVpnService.stopAllService]; cleared when the service starts.
+     */
+    @Volatile
+    var userStopRequested = false
+
     var serviceControl: SoftReference<ServiceControl>? = null
         set(value) {
             field = value
@@ -420,7 +433,16 @@ object CoreServiceManager {
         override fun shutdown(): Long {
             val serviceControl = serviceControl?.get() ?: return -1
             return try {
-                serviceControl.stopService()
+                if (userStopRequested) {
+                    // Intentional stop: tear the whole service down as usual.
+                    serviceControl.stopService()
+                } else {
+                    // Unexpected core shutdown (crash). Do NOT tear down the VPN
+                    // tun — keeping it up black-holes traffic so nothing leaks to
+                    // the physical network. The watchdog in CoreVpnService will
+                    // detect the dead core and restart it.
+                    LogUtil.w(AppConfig.TAG, "StartCore-Manager: Core shut down unexpectedly; keeping tun, watchdog will restart")
+                }
                 0
             } catch (e: Exception) {
                 LogUtil.e(AppConfig.TAG, "StartCore-Manager: Failed to stop service", e)

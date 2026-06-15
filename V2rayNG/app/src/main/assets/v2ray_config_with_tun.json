@@ -19,7 +19,7 @@
   },
   "inbounds": [{
     "tag": "socks",
-    "port": 10808,
+    "port": 2080,
     "protocol": "socks",
     "settings": {
       "auth": "noauth",

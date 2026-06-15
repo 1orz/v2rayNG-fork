@@ -47,6 +47,11 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/title_vpn_settings">
+        <Preference
+            android:key="pref_always_on_vpn"
+            android:summary="@string/summary_pref_always_on_vpn"
+            android:title="@string/title_pref_always_on_vpn" />
+
         <CheckBoxPreference
             android:key="pref_ipv6_enabled"
             android:summary="@string/summary_pref_ipv6_enabled"
@@ -87,14 +92,6 @@
             android:key="pref_vpn_dns"
             android:summary="@string/summary_pref_remote_dns"
             android:title="@string/title_pref_vpn_dns" />
-
-        <ListPreference
-            android:defaultValue="1"
-            android:entries="@array/vpn_bypass_lan"
-            android:entryValues="@array/vpn_bypass_lan_value"
-            android:key="pref_vpn_bypass_lan"
-            android:summary="%s"
-            android:title="@string/title_pref_vpn_bypass_lan" />
 
         <ListPreference
             android:defaultValue="0"
@@ -139,12 +136,6 @@
             android:title="@string/title_pref_sniffing_enabled" />
 
         <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="pref_route_only_enabled"
-            android:summary="@string/summary_pref_route_only_enabled"
-            android:title="@string/title_pref_route_only_enabled" />
-
-        <CheckBoxPreference
             android:defaultValue="true"
             android:key="pref_enable_local_proxy"
             android:summary="@string/summary_pref_enable_local_proxy"
@@ -159,7 +150,7 @@
         <EditTextPreference
             android:inputType="number"
             android:key="pref_socks_port"
-            android:summary="10808"
+            android:summary="2080"
             android:title="@string/title_pref_socks_port" />
 
         <CheckBoxPreference

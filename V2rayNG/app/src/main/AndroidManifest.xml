@@ -39,6 +39,8 @@
     <!-- <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Keep-alive: hold a partial wake lock so the core is not reaped in deep sleep. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:name=".AngApplication"
@@ -89,22 +91,10 @@
             android:name=".ui.SettingsActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.PerAppProxyActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.AppPickerActivity"
-            android:exported="false" />
-        <activity
             android:name=".ui.ScannerActivity"
             android:exported="false" />
         <activity
             android:name=".ui.LogcatActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.RoutingSettingActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.RoutingEditActivity"
             android:exported="false" />
         <activity
             android:name=".ui.SubSettingActivity"
@@ -160,9 +150,6 @@
                 <data android:host="install-sub" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ui.CheckUpdateActivity"
-            android:exported="false" />
         <activity
             android:name=".ui.BackupActivity"
             android:exported="false" />

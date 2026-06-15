@@ -9,7 +9,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.v2ray.ang"
+        applicationId = "com.cloudorz.v2ng"
         minSdk = 24
         targetSdk = 37
         versionCode = 734

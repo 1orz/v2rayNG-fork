@@ -542,7 +542,9 @@ object Utils {
      *
      * @return True if the package is Xray, false otherwise.
      */
-    fun isXray(): Boolean = BuildConfig.APPLICATION_ID.startsWith("com.v2ray.ang")
+    // This fork always bundles the Xray core, so this is hardcoded to true to
+    // decouple core detection from the (customized) application id.
+    fun isXray(): Boolean = true
 
     /**
      * Check if it is the Google Play version.

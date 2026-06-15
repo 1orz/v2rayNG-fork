@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name" translatable="false">v2rayNG</string>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name" translatable="false">CellHelper</string>
     <string name="app_widget_name">Switch</string>
     <string name="app_tile_name">Switch</string>
     <string name="app_tile_first_use">First use of this feature, please use the app to add server</string>
@@ -160,6 +160,9 @@
     <string name="title_advanced">Advanced Settings</string>
     <string name="title_core_settings">Core Settings</string>
     <string name="title_vpn_settings">VPN Settings</string>
+    <string name="title_pref_always_on_vpn" tools:ignore="MissingTranslation">Always-on VPN &amp; kill switch</string>
+    <string name="summary_pref_always_on_vpn" tools:ignore="MissingTranslation">Open system VPN settings. Enable \"Always-on VPN\" and \"Block connections without VPN\" to prevent any traffic leak.</string>
+    <string name="toast_could_not_open_settings" tools:ignore="MissingTranslation">Could not open settings</string>
     <string name="title_pref_per_app_proxy">Per-app proxy</string>
     <string name="summary_pref_per_app_proxy">General: Checked apps use proxy, unchecked apps connect directly; \nBypass mode: checked apps connect directly, unchecked apps use proxy. \nThe option to automatically select proxy applications is in the menu</string>
     <string name="title_pref_is_booted">Auto connect at startup</string>

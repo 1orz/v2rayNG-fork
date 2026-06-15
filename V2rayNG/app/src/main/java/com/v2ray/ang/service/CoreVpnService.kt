@@ -13,6 +13,7 @@ import android.net.ProxyInfo
 import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
+import android.os.PowerManager
 import android.os.StrictMode
 import androidx.annotation.RequiresApi
 import com.v2ray.ang.AppConfig
@@ -27,6 +28,13 @@ import com.v2ray.ang.handler.SettingsManager
 import com.v2ray.ang.util.LogUtil
 import com.v2ray.ang.util.MyContextWrapper
 import com.v2ray.ang.util.Utils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.lang.ref.SoftReference
 
 @SuppressLint("VpnServicePolicy")
@@ -34,6 +42,21 @@ class CoreVpnService : VpnService(), ServiceControl {
     private lateinit var mInterface: ParcelFileDescriptor
     private var isRunning = false
     private var tun2SocksService: Tun2SocksControl? = null
+
+    // Keep-alive: a partial wake lock keeps the core scheduled in deep sleep.
+    private var wakeLock: PowerManager.WakeLock? = null
+
+    // Keep-alive: watchdog that restarts a crashed core without tearing down the tun.
+    private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var watchdogJob: Job? = null
+
+    companion object {
+        // How often the watchdog checks that the core is still alive.
+        private const val WATCHDOG_INTERVAL_MS = 5_000L
+        // Backoff bounds for restart attempts after a crash.
+        private const val RESTART_BACKOFF_MIN_MS = 2_000L
+        private const val RESTART_BACKOFF_MAX_MS = 30_000L
+    }
 
     /**destroy
      * Unfortunately registerDefaultNetworkCallback is going to return our VPN interface: https://android.googlesource.com/platform/frameworks/base/+/dda156ab0c5d66ad82bdcf76cda07cbc0a9c8a2e
@@ -108,16 +131,42 @@ class CoreVpnService : VpnService(), ServiceControl {
             }
         }
 
+        // Release keep-alive resources in case we got here without stopAllService()
+        // (e.g. a permission failure that called stopSelf() directly).
+        watchdogJob?.cancel()
+        watchdogJob = null
+        releaseWakeLock()
+
         NotificationManager.cancelNotification()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         LogUtil.i(AppConfig.TAG, "StartCore-VPN: Service command received")
+        // Fresh start: this run is expected to keep running until the user stops it.
+        CoreServiceManager.userStopRequested = false
+        acquireWakeLock()
         NotificationManager.showNotification(null)
         setupVpnService()
         startService()
         return START_STICKY
         //return super.onStartCommand(intent, flags, startId)
+    }
+
+    /**
+     * Keep-alive: when the user swipes the app away from recents, do NOT stop the
+     * VPN. The tun must stay up so traffic keeps flowing through the tunnel and
+     * can never leak to the physical network. Re-assert the foreground notification.
+     */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        LogUtil.i(AppConfig.TAG, "StartCore-VPN: Task removed; keeping VPN alive")
+        if (isRunning) {
+            try {
+                NotificationManager.showNotification(null)
+            } catch (e: Exception) {
+                LogUtil.w(AppConfig.TAG, "StartCore-VPN: Failed to re-assert notification", e)
+            }
+        }
+        // Intentionally do not call super.onTaskRemoved() to stop the service.
     }
 
     override fun getService(): Service {
@@ -134,6 +183,7 @@ class CoreVpnService : VpnService(), ServiceControl {
             stopAllService()
             return
         }
+        startWatchdog()
     }
 
     override fun stopService() {
@@ -350,6 +400,12 @@ class CoreVpnService : VpnService(), ServiceControl {
 //        val emptyInfo = VpnNetworkInfo()
 //        val info = loadVpnNetworkInfo(configName, emptyInfo)!! + (lastNetworkInfo ?: emptyInfo)
 //        saveVpnNetworkInfo(configName, info)
+        // Mark this as an intentional teardown so the watchdog and the core
+        // shutdown callback do not try to resurrect the core.
+        CoreServiceManager.userStopRequested = true
+        watchdogJob?.cancel()
+        watchdogJob = null
+        releaseWakeLock()
         isRunning = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             try {
@@ -390,6 +446,85 @@ class CoreVpnService : VpnService(), ServiceControl {
                 LogUtil.e(AppConfig.TAG, "StartCore-VPN: Failed to close interface", e)
             }
         }
+    }
+
+    /**
+     * Keep-alive watchdog.
+     *
+     * Periodically verifies the core is still running. If the core died while the
+     * user still expects the VPN to be up (no stop requested), the core is
+     * restarted *without* closing the tun interface, so traffic is black-holed in
+     * the meantime and never leaks to the physical network.
+     */
+    private fun startWatchdog() {
+        watchdogJob?.cancel()
+        watchdogJob = serviceScope.launch {
+            var backoff = RESTART_BACKOFF_MIN_MS
+            while (isActive && isRunning && !CoreServiceManager.userStopRequested) {
+                delay(WATCHDOG_INTERVAL_MS)
+                if (!isRunning || CoreServiceManager.userStopRequested) break
+                if (!CoreServiceManager.isRunning()) {
+                    LogUtil.w(AppConfig.TAG, "StartCore-VPN: Watchdog detected dead core, restarting (tun kept up)")
+                    restartCore()
+                    delay(backoff)
+                    backoff = (backoff * 2).coerceAtMost(RESTART_BACKOFF_MAX_MS)
+                } else {
+                    backoff = RESTART_BACKOFF_MIN_MS
+                }
+            }
+        }
+    }
+
+    /**
+     * Restarts the core loop while keeping the existing tun interface alive.
+     * The tun is never closed here, so the kill-switch property holds across the
+     * restart: any packet that arrives while the core is down is dropped, not leaked.
+     */
+    private fun restartCore() {
+        if (!isRunning || !::mInterface.isInitialized || CoreServiceManager.userStopRequested) {
+            return
+        }
+        try {
+            // Tear down only the core/loop (unregisters receiver, stops dialer);
+            // does NOT touch the tun interface.
+            CoreServiceManager.stopCoreLoop()
+            // Brief pause to let the previous core release its listening port.
+            Thread.sleep(300)
+            if (CoreServiceManager.userStopRequested) return
+            if (!CoreServiceManager.startCoreLoop(mInterface)) {
+                LogUtil.e(AppConfig.TAG, "StartCore-VPN: Core restart failed, will retry")
+            } else {
+                LogUtil.i(AppConfig.TAG, "StartCore-VPN: Core restarted by watchdog")
+            }
+        } catch (e: Exception) {
+            LogUtil.e(AppConfig.TAG, "StartCore-VPN: Core restart error", e)
+        }
+    }
+
+    private fun acquireWakeLock() {
+        if (wakeLock?.isHeld == true) return
+        try {
+            val pm = getSystemService(POWER_SERVICE) as PowerManager
+            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "${AppConfig.ANG_PACKAGE}:vpn").apply {
+                setReferenceCounted(false)
+                acquire()
+            }
+            LogUtil.i(AppConfig.TAG, "StartCore-VPN: Wake lock acquired")
+        } catch (e: Exception) {
+            LogUtil.w(AppConfig.TAG, "StartCore-VPN: Failed to acquire wake lock", e)
+        }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            if (wakeLock?.isHeld == true) {
+                wakeLock?.release()
+                LogUtil.i(AppConfig.TAG, "StartCore-VPN: Wake lock released")
+            }
+        } catch (e: Exception) {
+            LogUtil.w(AppConfig.TAG, "StartCore-VPN: Failed to release wake lock", e)
+        }
+        wakeLock = null
     }
 }
 
