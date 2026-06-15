@@ -119,13 +119,15 @@ class MainRecyclerAdapter(
     }
 
     /**
-     * Gets the server address information
-     * Hides part of IP or domain information for privacy protection
+     * Gets the server address information.
+     * Always computed live (not from the stored description) so the "hide server
+     * address" setting takes effect immediately for existing configs too — the
+     * stored description was baked in at import time and may be masked/stale.
      * @param profile The server configuration
      * @return Formatted address string
      */
     private fun getAddress(profile: ProfileItem): String {
-        return profile.description.nullIfBlank() ?: AngConfigManager.generateDescription(profile)
+        return AngConfigManager.generateDescription(profile)
     }
 
     /**
