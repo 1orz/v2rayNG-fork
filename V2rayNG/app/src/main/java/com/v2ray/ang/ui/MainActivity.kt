@@ -80,6 +80,11 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
 
         binding.fab.setOnClickListener { handleFabAction() }
         binding.layoutTest.setOnClickListener { handleLayoutTestClick() }
+        binding.alwaysOnButton.setOnClickListener {
+            if (!Utils.openVpnSettings(this)) {
+                toast(R.string.toast_could_not_open_settings)
+            }
+        }
 
         setupGroupTab()
         setupViewModel()
@@ -163,11 +168,20 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     }
 
     private fun handleFabAction() {
-        applyRunningState(isLoading = true, isRunning = false)
-
         if (mainViewModel.isRunning.value == true) {
+            // System Always-on / lockdown owns the lifecycle: stopping is futile
+            // (the OS restarts the VPN at once), so block it and keep running.
+            if (Utils.isSystemAlwaysOnEnabled(this)) {
+                toast(R.string.toast_always_on_cannot_stop)
+                return
+            }
+            applyRunningState(isLoading = true, isRunning = false)
             CoreServiceManager.stopVService(this)
-        } else if (SettingsManager.isVpnMode()) {
+            return
+        }
+
+        applyRunningState(isLoading = true, isRunning = false)
+        if (SettingsManager.isVpnMode()) {
             val intent = VpnService.prepare(this)
             if (intent == null) {
                 startV2Ray()
@@ -211,6 +225,7 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
     }
 
     private fun applyRunningState(isLoading: Boolean, isRunning: Boolean) {
+        refreshAlwaysOnStatus()
         if (isLoading) {
             binding.fab.setImageResource(R.drawable.ic_fab_check)
             return
@@ -233,6 +248,18 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
 
     override fun onResume() {
         super.onResume()
+        refreshAlwaysOnStatus()
+    }
+
+    /**
+     * Reflect the system Always-on / lockdown state on the drawer entry so the
+     * user can see at a glance whether the kill switch is active.
+     */
+    private fun refreshAlwaysOnStatus() {
+        val item = binding.navView.menu.findItem(R.id.always_on_vpn_drawer) ?: return
+        val on = Utils.isSystemAlwaysOnEnabled(this)
+        val status = getString(if (on) R.string.always_on_status_on else R.string.always_on_status_off)
+        item.title = "${getString(R.string.title_pref_always_on_vpn)} · $status"
     }
 
     override fun onPause() {
@@ -674,6 +701,11 @@ class MainActivity : HelperBaseActivity(), NavigationView.OnNavigationItemSelect
         // Handle navigation view item clicks here.
         when (item.itemId) {
             R.id.sub_setting -> requestActivityLauncher.launch(Intent(this, SubSettingActivity::class.java))
+            R.id.always_on_vpn_drawer -> {
+                if (!Utils.openVpnSettings(this)) {
+                    toast(R.string.toast_could_not_open_settings)
+                }
+            }
             R.id.user_asset_setting -> requestActivityLauncher.launch(Intent(this, UserAssetActivity::class.java))
             R.id.settings -> requestActivityLauncher.launch(Intent(this, SettingsActivity::class.java))
             R.id.logcat -> startActivity(Intent(this, LogcatActivity::class.java))

@@ -38,9 +38,23 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        // Fixed self-signing key for this fork, committed to the repo and used by
+        // BOTH local and CI builds so every APK has the SAME signature (installs
+        // update in place; no key churn). This is a self-distribution key, not a
+        // Play Store upload key.
+        create("release") {
+            storeFile = file("../cellhelper.jks")
+            storePassword = "android"
+            keyAlias = "androidkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

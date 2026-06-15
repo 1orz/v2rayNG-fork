@@ -78,14 +78,8 @@ class SettingsActivity : BaseActivity() {
             // "Always-on VPN" + "Block connections without VPN" (lockdown), the
             // only true OS-level kill switch when the app is force-stopped.
             alwaysOnVpn?.setOnPreferenceClickListener {
-                try {
-                    startActivity(Intent("android.settings.VPN_SETTINGS"))
-                } catch (e: Exception) {
-                    try {
-                        startActivity(Intent(Settings.ACTION_SETTINGS))
-                    } catch (e2: Exception) {
-                        activity?.toastError(R.string.toast_could_not_open_settings)
-                    }
+                if (!Utils.openVpnSettings(requireContext())) {
+                    activity?.toastError(R.string.toast_could_not_open_settings)
                 }
                 true
             }

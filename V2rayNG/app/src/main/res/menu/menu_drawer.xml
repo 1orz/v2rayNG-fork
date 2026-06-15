@@ -16,6 +16,10 @@
             android:id="@+id/settings"
             android:icon="@drawable/ic_settings_24dp"
             android:title="@string/title_settings" />
+        <item
+            android:id="@+id/always_on_vpn_drawer"
+            android:icon="@drawable/ic_lock_24dp"
+            android:title="@string/title_pref_always_on_vpn" />
     </group>
 
     <group android:id="@+id/group_id2">

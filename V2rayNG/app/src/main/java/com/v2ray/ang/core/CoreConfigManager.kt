@@ -745,14 +745,27 @@ object CoreConfigManager {
         )
 
         // DNS routing
-        v2rayConfig.routing.rules.add(
-            V2rayConfig.RoutingBean.RulesBean(
-                outboundTag = AppConfig.TAG_DIRECT,
-                inboundTag = domesticDnsTags,
-                domain = null
-            )
-        )
+        // Forced global / anti-leak: route domestic DNS through the proxy instead
+        // of direct, so no DNS query ever leaves the device in clear text. (Upstream
+        // sends domesticDnsTags to TAG_DIRECT, which is a DNS leak in global mode.)
         val dnsProxyBalancerTag = policyGroupBalancerTags[AppConfig.TAG_PROXY]
+        if (dnsProxyBalancerTag != null) {
+            v2rayConfig.routing.rules.add(
+                V2rayConfig.RoutingBean.RulesBean(
+                    balancerTag = dnsProxyBalancerTag,
+                    inboundTag = domesticDnsTags,
+                    domain = null
+                )
+            )
+        } else {
+            v2rayConfig.routing.rules.add(
+                V2rayConfig.RoutingBean.RulesBean(
+                    outboundTag = AppConfig.TAG_PROXY,
+                    inboundTag = domesticDnsTags,
+                    domain = null
+                )
+            )
+        }
         if (dnsProxyBalancerTag != null) {
             v2rayConfig.routing.rules.add(
                 V2rayConfig.RoutingBean.RulesBean(

@@ -18,6 +18,7 @@ import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.extension.toSpeedString
 import com.v2ray.ang.ui.MainActivity
 import com.v2ray.ang.util.LogUtil
+import com.v2ray.ang.util.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -99,16 +100,21 @@ object NotificationManager {
             .setShowWhen(false)
             .setOnlyAlertOnce(true)
             .setContentIntent(contentPendingIntent)
-            .addAction(
+
+        // Under system Always-on / lockdown the OS restarts the VPN immediately,
+        // so a stop action is misleading. Offer only restart in that case.
+        if (!Utils.isSystemAlwaysOnEnabled(service)) {
+            mBuilder?.addAction(
                 R.drawable.ic_delete_24dp,
                 service.getString(R.string.notification_action_stop_v2ray),
                 stopV2RayPendingIntent
             )
-            .addAction(
-                R.drawable.ic_restore_24dp,
-                service.getString(R.string.title_service_restart),
-                restartV2RayPendingIntent
-            )
+        }
+        mBuilder?.addAction(
+            R.drawable.ic_restore_24dp,
+            service.getString(R.string.title_service_restart),
+            restartV2RayPendingIntent
+        )
 
         //mBuilder?.setDefaults(NotificationCompat.FLAG_ONLY_ALERT_ONCE)
 

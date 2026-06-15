@@ -283,7 +283,10 @@ class CoreVpnService : VpnService(), ServiceControl {
             builder.addRoute("0.0.0.0", 0)
         }
 
-        // Configure IPv6 if enabled
+        // Configure IPv6 if enabled. IPv6 is enabled by default in this fork (see
+        // ensureDefaultSettings) so IPv6 traffic is captured by the tun and proxied
+        // when the server supports it. If the user turns IPv6 off, ::/0 is not added;
+        // rely on the system lockdown to block IPv6 rather than black-holing it.
         if (MmkvManager.decodeSettingsBool(AppConfig.PREF_IPV6_ENABLED) == true) {
             builder.addAddress(vpnConfig.ipv6Client, 126)
             if (bypassLan) {

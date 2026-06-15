@@ -50,6 +50,7 @@ object AppConfig {
     const val PREF_START_SCAN_IMMEDIATE = "pref_start_scan_immediate"
     const val PREF_DOUBLE_COLUMN_DISPLAY = "pref_double_column_display"
     const val PREF_GROUP_ALL_DISPLAY = "pref_group_all_display"
+    const val PREF_HIDE_SERVER_ADDRESS = "pref_hide_server_address"
     const val PREF_LANGUAGE = "pref_language"
     const val PREF_UI_MODE_NIGHT = "pref_ui_mode_night"
     const val PREF_IPV6_ENABLED = "pref_ipv6_enabled"
@@ -116,8 +117,8 @@ object AppConfig {
     const val GITHUB_RAW_URL = "https://raw.githubusercontent.com"
     const val GITHUB_DOWNLOAD_URL = "$GITHUB_URL/%s/releases/latest/download"
     const val ANDROID_PACKAGE_NAME_LIST_URL = "$GITHUB_RAW_URL/2dust/androidpackagenamelist/master/proxy.txt"
-    const val DELAY_TEST_URL = "https://www.gstatic.com/generate_204"
-    const val DELAY_TEST_URL2 = "https://www.google.com/generate_204"
+    const val DELAY_TEST_URL = "http://cp.cloudflare.com/generate_204"
+    const val DELAY_TEST_URL2 = "https://cp.cloudflare.com/generate_204"
 
     //    const val IP_API_URL = "https://speed.cloudflare.com/meta"
     const val IP_API_URL = "https://api.ip.sb/geoip"

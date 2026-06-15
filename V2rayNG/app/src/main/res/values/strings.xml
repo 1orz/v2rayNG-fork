@@ -163,6 +163,11 @@
     <string name="title_pref_always_on_vpn" tools:ignore="MissingTranslation">Always-on VPN &amp; kill switch</string>
     <string name="summary_pref_always_on_vpn" tools:ignore="MissingTranslation">Open system VPN settings. Enable \"Always-on VPN\" and \"Block connections without VPN\" to prevent any traffic leak.</string>
     <string name="toast_could_not_open_settings" tools:ignore="MissingTranslation">Could not open settings</string>
+    <string name="toast_always_on_cannot_stop" tools:ignore="MissingTranslation">Always-on VPN is enabled by the system; it can\'t be stopped here. Disable it in system VPN settings first.</string>
+    <string name="always_on_status_on" tools:ignore="MissingTranslation">On</string>
+    <string name="always_on_status_off" tools:ignore="MissingTranslation">Off</string>
+    <string name="title_pref_hide_server_address" tools:ignore="MissingTranslation">Hide server address</string>
+    <string name="summary_pref_hide_server_address" tools:ignore="MissingTranslation">Mask the server address as *** in the config list. Off by default (full address shown).</string>
     <string name="title_pref_per_app_proxy">Per-app proxy</string>
     <string name="summary_pref_per_app_proxy">General: Checked apps use proxy, unchecked apps connect directly; \nBypass mode: checked apps connect directly, unchecked apps use proxy. \nThe option to automatically select proxy applications is in the menu</string>
     <string name="title_pref_is_booted">Auto connect at startup</string>

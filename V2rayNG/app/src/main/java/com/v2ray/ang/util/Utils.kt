@@ -291,6 +291,47 @@ object Utils {
     }
 
     /**
+     * Whether the system "Always-on VPN" is currently configured to use THIS app.
+     * Reads the real system setting (Settings.Secure.always_on_vpn_app), so it is
+     * accurate whether or not our VPN service is currently running — unlike the
+     * VpnService.isAlwaysOn() flag which is only known while the tun is established.
+     *
+     * @param context The context to use.
+     * @return True if always-on VPN points at this package.
+     */
+    fun isSystemAlwaysOnEnabled(context: Context): Boolean {
+        return try {
+            val pkg = Settings.Secure.getString(context.contentResolver, "always_on_vpn_app")
+            !pkg.isNullOrEmpty() && pkg == context.packageName
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Open the system VPN settings, where the user can enable "Always-on VPN"
+     * and "Block connections without VPN" (lockdown) for the kill switch.
+     * Falls back to the top-level Settings screen if the VPN screen is missing.
+     *
+     * @param context The context to use.
+     * @return True if a settings screen was opened, false otherwise.
+     */
+    fun openVpnSettings(context: Context): Boolean {
+        return try {
+            context.startActivity(Intent("android.settings.VPN_SETTINGS"))
+            true
+        } catch (e: Exception) {
+            try {
+                context.startActivity(Intent(Settings.ACTION_SETTINGS))
+                true
+            } catch (e2: Exception) {
+                LogUtil.e(AppConfig.TAG, "Failed to open VPN settings", e2)
+                false
+            }
+        }
+    }
+
+    /**
      * Generate a UUID.
      *
      * @return A UUID string without dashes.

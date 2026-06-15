@@ -159,6 +159,11 @@
     <string name="title_pref_always_on_vpn">始终连接 VPN 与防泄漏</string>
     <string name="summary_pref_always_on_vpn">打开系统 VPN 设置，开启\"始终开启的 VPN\"和\"屏蔽无 VPN 的连接\"，防止任何流量侧漏。</string>
     <string name="toast_could_not_open_settings">无法打开设置</string>
+    <string name="toast_always_on_cannot_stop">系统已启用"始终开启的 VPN"，无法在应用内停止。如需停止请先到系统 VPN 设置中关闭。</string>
+    <string name="always_on_status_on">已开启</string>
+    <string name="always_on_status_off">未开启</string>
+    <string name="title_pref_hide_server_address">隐藏服务器地址</string>
+    <string name="summary_pref_hide_server_address">在配置列表中用 *** 隐藏服务器地址。默认关闭（显示完整地址）。</string>
     <string name="title_pref_per_app_proxy">分应用</string>
     <string name="summary_pref_per_app_proxy">常规: 勾选的 App 被代理, 未勾选的直连;\n绕行模式: 勾选的 App 直连, 未勾选的被代理.\n不明白者在菜单中选择自动选中需代理应用</string>
     <string name="title_pref_is_booted">开机时自动连接</string>

@@ -1,6 +1,8 @@
 # Ignore data and key store files
 *.dat
 *.jks
+# ...except the fork's fixed self-signing key, shared by local + CI builds
+!V2rayNG/cellhelper.jks
 
 # Ignore output JSON file
 V2rayNG/app/release/output.json

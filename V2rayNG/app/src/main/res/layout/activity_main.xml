@@ -18,7 +18,21 @@
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize" />
+                android:layout_height="?attr/actionBarSize">
+
+                <!-- Always-on / kill-switch shortcut. Hosted directly in the Toolbar
+                     (gravity end) so it sits to the left of the menu action icons
+                     (filter, add) without consuming an action slot. -->
+                <ImageButton
+                    android:id="@+id/always_on_button"
+                    android:layout_width="?attr/actionBarSize"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="end"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/title_pref_always_on_vpn"
+                    android:src="@drawable/ic_lock_24dp" />
+
+            </androidx.appcompat.widget.Toolbar>
 
         </com.google.android.material.appbar.AppBarLayout>
 

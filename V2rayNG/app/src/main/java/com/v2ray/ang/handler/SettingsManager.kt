@@ -510,10 +510,31 @@ object SettingsManager {
         ensureDefaultValue(AppConfig.PREF_MUX_XUDP_CONCURRENCY, "8")
         ensureDefaultValue(AppConfig.PREF_FRAGMENT_LENGTH, "50-100")
         ensureDefaultValue(AppConfig.PREF_FRAGMENT_INTERVAL, "10-20")
+
+        // Boolean feature defaults for this fork.
+        ensureDefaultValueBool(AppConfig.PREF_SPEED_ENABLED, true)          // 启用速度显示
+        ensureDefaultValueBool(AppConfig.PREF_CONFIRM_REMOVE, true)         // 删除配置确认
+        ensureDefaultValueBool(AppConfig.PREF_START_SCAN_IMMEDIATE, true)   // 立即启动扫码
+        ensureDefaultValueBool(AppConfig.PREF_IPV6_ENABLED, true)           // 启用 IPv6
+        ensureDefaultValueBool(AppConfig.PREF_APPEND_HTTP_PROXY, true)      // 追加 HTTP 代理
+        ensureDefaultValueBool(AppConfig.PREF_USE_HEV_TUNNEL, true)         // 启用 hev tun
+        ensureDefaultValueBool(AppConfig.PREF_SNIFFING_ENABLED, false)      // 不开启流量探测
     }
 
     private fun ensureDefaultValue(key: String, default: String) {
         if (MmkvManager.decodeSettingsString(key).isNullOrEmpty()) {
+            MmkvManager.encodeSettings(key, default)
+        }
+    }
+
+    /**
+     * Like [ensureDefaultValue] but for boolean prefs (stored/read as real bools).
+     * Only writes when the key is absent so the user's later choice is respected.
+     * Absence is detected by comparing reads with two different fallbacks.
+     */
+    private fun ensureDefaultValueBool(key: String, default: Boolean) {
+        val present = MmkvManager.decodeSettingsBool(key, true) == MmkvManager.decodeSettingsBool(key, false)
+        if (!present) {
             MmkvManager.encodeSettings(key, default)
         }
     }

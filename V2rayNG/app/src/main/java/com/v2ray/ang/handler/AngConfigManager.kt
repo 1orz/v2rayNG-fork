@@ -651,13 +651,17 @@ object AngConfigManager {
      * @return The generated description.
      */
     fun generateDescription(profile: ProfileItem): String {
-        // Hide xxx:xxx:***/xxx.xxx.xxx.***
         val server = profile.server
         val port = profile.serverPort
         if (server.isNullOrBlank() && port.isNullOrBlank()) return ""
 
+        // By default show the full server address. Only mask it (xxx:xxx:*** /
+        // xxx.xxx.xxx.***) when the user explicitly opts in.
+        val hideAddress = MmkvManager.decodeSettingsBool(AppConfig.PREF_HIDE_SERVER_ADDRESS, false)
         val addrPart = server?.let {
-            if (it.contains(":"))
+            if (!hideAddress)
+                it
+            else if (it.contains(":"))
                 it.split(":").take(2).joinToString(":", postfix = ":***")
             else
                 it.split('.').dropLast(1).joinToString(".", postfix = ".***")
