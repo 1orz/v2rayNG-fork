@@ -471,6 +471,13 @@ object SettingsManager {
     }
 
     /**
+     * Check if a root (system-wide) run mode is selected.
+     */
+    fun isRootMode(): Boolean {
+        return MmkvManager.decodeSettingsBool(AppConfig.PREF_ROOT_MODE_ENABLE, false)
+    }
+
+    /**
      *  Check if process routing can be used.
      */
     fun canUseProcessRouting(): Boolean {
@@ -510,6 +517,7 @@ object SettingsManager {
         ensureDefaultValue(AppConfig.PREF_MUX_XUDP_CONCURRENCY, "8")
         ensureDefaultValue(AppConfig.PREF_FRAGMENT_LENGTH, "50-100")
         ensureDefaultValue(AppConfig.PREF_FRAGMENT_INTERVAL, "10-20")
+        ensureDefaultValue(AppConfig.PREF_FRAGMENT_MAXSPLIT, "10")
 
         // Boolean feature defaults for this fork.
         ensureDefaultValueBool(AppConfig.PREF_SPEED_ENABLED, true)          // 启用速度显示
